@@ -527,7 +527,7 @@ TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRU
         CHECK(p3.getMetadata() == nullptr);
 
         // check default value in case of empty json
-        json j4;
+        const json j4;
         T p4 = j4.get<T>();
         CHECK(p4.getName() == "");
         CHECK(p4.getAge() == 0);
