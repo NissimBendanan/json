@@ -1,24 +1,25 @@
-# NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE, NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT
-
-# NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT
+<h1>NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE, NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT,
+    NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE,
+    NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE</h1>
 
 ```cpp
-#define NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE(type, base_type, member...)                  // (1)
-#define NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT(type, base_type, member...)     // (2)
+#define NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE(type, base_type, member...)                    // (1)
+#define NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT(type, base_type, member...)       // (2)
+#define NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE(type, base_type, member...)     // (3)
 
-#define NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE(type, base_type, member...)              // (3)
-#define NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT(type, base_type, member...) // (4)
+#define NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE(type, base_type, member...)                // (4)
+#define NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT(type, base_type, member...)   // (5)
+#define NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(type, base_type, member...) // (6)
 ```
 
 These macros can be used to simplify the serialization/deserialization of derived types if you want to use a JSON
 object as serialization and want to use the member variable names as object keys in that object.
 
-- Macros 1 and 2 are to be defined **inside** the class/struct to create code for.
+- Macros 1, 2 and 3 are to be defined **inside** the class/struct to create code for.
 Like [`NLOHMANN_DEFINE_TYPE_INTRUSIVE`](nlohmann_define_type_intrusive.md), they can access private members.
-- Macros 3 and 4 are to be defined **outside** the class/struct to create code for, but **inside** its namespace.
+- Macros 4, 5 and 6 are to be defined **outside** the class/struct to create code for, but **inside** its namespace.
 Like [`NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE`](nlohmann_define_type_non_intrusive.md),
 they **cannot** access private members.
-
 
 The first  parameter is the name of the derived class/struct,
 the second parameter is the name of the base class/struct and all remaining parameters name the members.
@@ -50,14 +51,20 @@ friend void to_json(nlohmann::json&, const type&);
 friend void from_json(const nlohmann::json&, type&);
 ```
 
-Macros 3 and 4 add two functions to the namespace which take care of the serialization and deserialization:
+Macros 4 and 5 add two functions to the namespace which take care of the serialization and deserialization:
 
 ```cpp
 void to_json(nlohmann::json&, const type&);
 void from_json(const nlohmann::json&, type&);
 ```
 
-In both cases they call the `to_json`/`from_json` functions of the base type
+Macros 3 and 6 add one function to the namespace which take care of the serialization only:
+
+```cpp
+void to_json(nlohmann::json&, const type&);
+```
+
+In first two cases cases they call the `to_json`/`from_json` functions of the base type
 before serializing/deserializing the members of the derived type:
 
 ```cpp
@@ -75,12 +82,24 @@ void from_json(const nlohmann::json& j, B& b) {
 }
 ```
 
+In the third case only `to_json` will be called:
+
+```cpp
+class A { /* ... */ };
+class B : public A { /* ... */ };
+
+void to_json(nlohmann::json& j, const B& b) {
+    nlohmann::to_json(j, static_cast<const A&>(b));
+    // ...
+}
+```
+
 ## Notes
 
 !!! info "Prerequisites"
 
-    - Macros 1 and 2 have the same prerequisites of NLOHMANN_DEFINE_TYPE_INTRUSIVE. 
-    - Macros 3 and 3 have the same prerequisites of NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE.
+    - Macros 1, 2 and 3 have the same prerequisites of NLOHMANN_DEFINE_TYPE_INTRUSIVE. 
+    - Macros 4, 5 and 6 have the same prerequisites of NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE.
     - Serialization/deserialization of base types must be defined.
 
 !!! warning "Implementation limits"
@@ -110,7 +129,7 @@ class B : public A {
 - [NLOHMANN_DEFINE_TYPE_INTRUSIVE / NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT](nlohmann_define_type_intrusive.md)
   for similar macros that can be defined _inside_ a non-derived type.
 - [NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE / NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT](nlohmann_define_type_non_intrusive.md)
-  for a similar macros that can be defined _outside_ a non-derived type.
+  for similar macros that can be defined _outside_ a non-derived type.
 - [Arbitrary Type Conversions](../../features/arbitrary_types.md) for an overview.
 
 ## Version history
